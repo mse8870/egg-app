@@ -627,7 +627,10 @@ function getDeviceId() {
 async function callGemini(key, prompt, imgB64, imgMime) {
   const res = await fetch(CONFIG.FUNCTION_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+    },
     body: JSON.stringify({
       action: 'generate',
       device_id: getDeviceId(),
@@ -649,7 +652,10 @@ async function fetchQuotaFromServer() {
   try {
     const res = await fetch(CONFIG.FUNCTION_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${CONFIG.SUPABASE_KEY}`,
+      },
       body: JSON.stringify({ action: 'get_quota', device_id: getDeviceId() })
     });
     const data = await res.json();
