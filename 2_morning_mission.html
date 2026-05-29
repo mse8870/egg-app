@@ -160,23 +160,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);min-height:100vh
 <div class="loading-overlay" id="loading"><div class="spinner"></div><span id="loadingText">불러오는 중...</span></div>
 <div class="confetti" id="confetti"></div>
 
-<!-- API 키 입력 모달 -->
-<div class="modal-overlay" id="apiKeyModal">
-  <div class="modal">
-    <div class="modal-title">🔑 API 키 설정</div>
-    <div class="modal-sub">직접 만들기 기능을 사용하려면 Gemini API 키가 필요해요.<br/>키는 이 기기에만 저장되고 외부로 전송되지 않아요.</div>
-    <input type="password" id="apiKeyInput" placeholder="AIza..."
-      style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid var(--pink-l);background:var(--pink-p);color:var(--main);font-family:'Noto Sans KR',sans-serif;font-size:.9rem;outline:none;margin-bottom:14px;"/>
-    <div style="font-size:.75rem;color:var(--hint);margin-bottom:16px;">
-      👉 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--pink);">aistudio.google.com/apikey</a> 에서 무료로 발급받을 수 있어요
-    </div>
-    <div style="display:flex;gap:10px;">
-      <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="closeModal('apiKeyModal')">나중에</button>
-      <button class="btn btn-primary btn-sm" style="flex:1;" onclick="saveApiKey()">저장하기</button>
-    </div>
-  </div>
-</div>
-
 <!-- 횟수 초과 모달 -->
 <div class="modal-overlay" id="quotaModal">
   <div class="modal">
@@ -406,7 +389,6 @@ function switchTab(tab) {
   document.getElementById('tab-create').classList.toggle('active',  tab==='create');
   if (tab==='create') {
     renderQuota(); checkCreateReady();
-    if (!CONFIG.GEMINI_KEY) setTimeout(promptApiKey, 300);
   }
   checkStartReady();
 }
@@ -804,27 +786,7 @@ function openModal(id){document.getElementById(id).classList.add('show');}
 function closeModal(id){document.getElementById(id).classList.remove('show');}
 function base64ToBlob(b64,mime){const bin=atob(b64);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
 
-// ━━━ API 키 관리 (기기에 저장, 파일에 넣지 않음) ━━━
-function loadApiKey() {
-  const saved = localStorage.getItem('geminiKey');
-  if (saved) { CONFIG.GEMINI_KEY = saved; return true; }
-  return false;
-}
-function promptApiKey() {
-  openModal('apiKeyModal');
-}
-function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (!key) { alert('API 키를 입력해주세요.'); return; }
-  CONFIG.GEMINI_KEY = key;
-  localStorage.setItem('geminiKey', key);
-  closeModal('apiKeyModal');
-  checkCreateReady();
-  alert('✅ API 키가 저장됐어요! 다음부터는 자동으로 사용돼요.');
-}
-
 // ━━━ 초기화 ━━━
-loadApiKey();
 loadLibrary();
 renderQuota();
 renderMissionEditor();
