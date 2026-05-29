@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🥚 부화 스튜디오 — 관리자</title>
+<link href="https://fonts.googleapis.com/css2?family=Gmarket+Sans:wght@300;500;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root {
+  --bg:       #0a0a0f;
+  --surface:  #111118;
+  --card:     #18181f;
+  --border:   #2a2a3a;
+  --border2:  #3a3a50;
+  --accent:   #7c5cfc;
+  --accent-d: #5a3de8;
+  --pink:     #fc5c9c;
+  --teal:     #2dd4bf;
+  --gold:     #fbbf24;
+  --text:     #e8e8f0;
+  --muted:    #6868a0;
+  --muted2:   #9898c0;
+  --success:  #22c55e;
+  --danger:   #ef4444;
+  --radius:   14px;
+  --radius-sm:8px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{
+  font-family:'Noto Sans KR',sans-serif;
+  background:var(--bg);
+  color:var(--text);
+  min-height:100vh;
+}
+
+/* ── 레이아웃 ── */
+.layout{display:flex;min-height:100vh;}
+
+/* 사이드바 */
+.sidebar{
+  width:220px;
+  flex-shrink:0;
+  background:var(--surface);
+  border-right:1px solid var(--border);
+  display:flex;
+  flex-direction:column;
+  padding:24px 0;
+  position:sticky;
+  top:0;
+  height:100vh;
+}
+.logo{
+  font-family:'Gmarket Sans',sans-serif;
+  font-size:1.1rem;
+  font-weight:700;
+  color:var(--text);
+  padding:0 20px 24px;
+  border-bottom:1px solid var(--border);
+  display:flex;
+  align-items:center;
+  gap:10px;
+}
+.logo span{font-size:1.4rem;}
+.nav{flex:1;padding:16px 0;}
+.nav-item{
+  display:flex;
+  align-items:center;
+  gap:10px;
+  padding:11px 20px;
+  color:var(--muted);
+  cursor:pointer;
+  transition:all .15s;
+  font-size:.9rem;
+  border-left:3px solid transparent;
+}
+.nav-item:hover{color:var(--text);background:rgba(255,255,255,.04);}
+.nav-item.active{
+  color:var(--accent);
+  background:rgba(124,92,252,.08);
+  border-left-color:var(--accent);
+}
+.nav-item .icon{font-size:1.1rem;width:20px;text-align:center;}
+.sidebar-footer{
+  padding:16px 20px;
+  border-top:1px solid var(--border);
+  font-size:.78rem;
+  color:var(--muted);
+}
+
+/* 메인 콘텐츠 */
+.main{flex:1;overflow:hidden;}
+.page{display:none;padding:32px;max-width:1000px;}
+.page.active{display:block;}
+
+.page-title{
+  font-family:'Gmarket Sans',sans-serif;
+  font-size:1.5rem;
+  font-weight:700;
+  margin-bottom:8px;
+}
+.page-desc{color:var(--muted2);font-size:.9rem;margin-bottom:28px;}
+
+/* ── 카드 ── */
+.card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:24px;
+  margin-bottom:20px;
+}
+.card-title{
+  font-weight:700;
+  font-size:.95rem;
+  margin-bottom:16px;
+  color:var(--muted2);
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  font-size:.78rem;
+}
+
+/* ── 폼 요소 ── */
+.field{margin-bottom:16px;}
+.field label{
+  display:block;
+  font-size:.82rem;
+  color:var(--muted2);
+  margin-bottom:6px;
+  font-weight:500;
+}
+.field input,.field textarea,.field select{
+  width:100%;
+  background:#0f0f18;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:10px 14px;
+  color:var(--text);
+  font-family:'Noto Sans KR',sans-serif;
+  font-size:.9rem;
+  outline:none;
+  transition:border-color .15s;
+}
+.field input:focus,.field textarea:focus,.field select:focus{border-color:var(--accent);}
+.field input[type=password]{letter-spacing:.1em;}
+.field textarea{resize:vertical;min-height:80px;line-height:1.5;}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+
+/* ── 버튼 ── */
+.btn{
+  display:inline-flex;
+  align-items:center;
+  gap:8px;
+  padding:10px 20px;
+  border-radius:var(--radius-sm);
+  border:none;
+  cursor:pointer;
+  font-family:'Noto Sans KR',sans-serif;
+  font-weight:700;
+  font-size:.88rem;
+  transition:all .15s;
+}
+.btn-primary{background:var(--accent);color:#fff;}
+.btn-primary:hover{background:var(--accent-d);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;}
+.btn-danger{background:transparent;border:1px solid var(--danger);color:var(--danger);}
+.btn-danger:hover{background:rgba(239,68,68,.1);}
+.btn-ghost{background:transparent;border:1px solid var(--border2);color:var(--muted2);}
+.btn-ghost:hover{border-color:var(--accent);color:var(--accent);}
+.btn-sm{padding:6px 12px;font-size:.8rem;}
+.btn-full{width:100%;justify-content:center;}
+
+/* ── 업로드 존 ── */
+.upload-zone{
+  border:2px dashed var(--border2);
+  border-radius:var(--radius);
+  padding:32px;
+  text-align:center;
+  cursor:pointer;
+  transition:all .2s;
+  position:relative;
+}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:rgba(124,92,252,.05);}
+.upload-zone input[type=file]{
+  position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;
+}
+.upload-icon{font-size:2.5rem;margin-bottom:8px;}
+.upload-label{font-weight:700;font-size:.95rem;}
+.upload-sub{color:var(--muted);font-size:.82rem;margin-top:4px;}
+.preview-img{
+  width:100%;max-height:200px;object-fit:contain;
+  border-radius:var(--radius-sm);margin-top:12px;
+  border:1px solid var(--border);
+}
+
+/* ── 스텝 칩 ── */
+.step-chips{display:flex;gap:8px;flex-wrap:wrap;}
+.step-chip{
+  padding:7px 16px;
+  border-radius:20px;
+  border:1px solid var(--border2);
+  background:transparent;
+  color:var(--muted2);
+  cursor:pointer;
+  font-size:.85rem;
+  font-weight:700;
+  transition:all .15s;
+  font-family:'Noto Sans KR',sans-serif;
+}
+.step-chip.active{background:var(--accent);color:#fff;border-color:var(--accent);}
+
+/* ── 진행 표시 ── */
+.progress-wrap{
+  display:none;
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  padding:20px 24px;
+  margin-bottom:20px;
+}
+.progress-label{font-weight:700;margin-bottom:10px;}
+.prog-bar-bg{background:#1a1a28;border-radius:99px;height:8px;overflow:hidden;}
+.prog-bar-fill{
+  height:100%;
+  background:linear-gradient(90deg,var(--accent),var(--pink));
+  border-radius:99px;
+  transition:width .4s ease;
+}
+.step-statuses{
+  display:flex;gap:6px;flex-wrap:wrap;margin-top:12px;
+}
+.step-dot{
+  padding:4px 10px;
+  border-radius:99px;
+  font-size:.75rem;
+  font-weight:700;
+  background:var(--surface);
+  color:var(--muted);
+  border:1px solid var(--border);
+  transition:all .3s;
+}
+.step-dot.done{background:rgba(34,197,94,.15);color:var(--success);border-color:rgba(34,197,94,.3);}
+.step-dot.active{background:rgba(124,92,252,.2);color:var(--accent);border-color:var(--accent);animation:pulse .8s infinite;}
+.step-dot.fail{background:rgba(239,68,68,.1);color:var(--danger);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+
+/* ── 결과 갤러리 ── */
+.gallery{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(140px,1fr));
+  gap:12px;
+  margin-top:16px;
+}
+.gallery-item{
+  background:var(--surface);
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  overflow:hidden;
+  position:relative;
+}
+.gallery-item img{width:100%;aspect-ratio:1;object-fit:contain;display:block;background:#0f0f18;}
+.gallery-caption{
+  padding:8px 10px;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+}
+.gallery-label{font-size:.75rem;color:var(--muted2);font-weight:700;}
+.btn-dl-sm{
+  background:transparent;border:1px solid var(--border2);
+  color:var(--muted2);padding:3px 8px;border-radius:6px;
+  font-size:.7rem;cursor:pointer;font-family:'Noto Sans KR',sans-serif;
+  transition:all .15s;
+}
+.btn-dl-sm:hover{border-color:var(--accent);color:var(--accent);}
+
+/* ── 에러/성공 알림 ── */
+.alert{
+  padding:12px 16px;
+  border-radius:var(--radius-sm);
+  font-size:.88rem;
+  margin-bottom:16px;
+  display:none;
+}
+.alert.show{display:block;}
+.alert-error{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.3);color:#fca5a5;}
+.alert-success{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.3);color:#86efac;}
+
+/* ── API 키 상태 ── */
+.key-row{display:flex;gap:8px;}
+.key-row input{flex:1;}
+.key-status{
+  margin-top:6px;
+  font-size:.8rem;
+  display:none;
+  padding:6px 10px;
+  border-radius:6px;
+}
+.key-status.ok{background:rgba(34,197,94,.1);color:var(--success);display:block;}
+.key-status.fail{background:rgba(239,68,68,.1);color:var(--danger);display:block;}
+
+/* ── 라이브러리 페이지 ── */
+.lib-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:20px;}
+.lib-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
+  gap:16px;
+}
+.char-card{
+  background:var(--card);
+  border:1px solid var(--border);
+  border-radius:var(--radius);
+  overflow:hidden;
+  transition:border-color .2s;
+}
+.char-card:hover{border-color:var(--border2);}
+.char-card-img{
+  width:100%;aspect-ratio:1;
+  background:#0f0f18;
+  display:flex;align-items:center;justify-content:center;
+  font-size:3rem;color:var(--muted);
+  position:relative;overflow:hidden;
+}
+.char-card-img img{width:100%;height:100%;object-fit:contain;}
+.char-card-body{padding:12px;}
+.char-name{font-weight:700;font-size:.92rem;margin-bottom:4px;}
+.char-meta{font-size:.75rem;color:var(--muted);}
+.char-tags{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px;}
+.tag{
+  padding:2px 8px;border-radius:99px;
+  background:rgba(124,92,252,.15);
+  color:var(--accent);font-size:.72rem;font-weight:700;
+}
+.char-actions{display:flex;gap:6px;margin-top:12px;}
+
+/* ── JSON 내보내기 ── */
+.json-box{
+  background:#0a0a12;
+  border:1px solid var(--border);
+  border-radius:var(--radius-sm);
+  padding:16px;
+  font-family:monospace;
+  font-size:.78rem;
+  color:#a0a0d0;
+  overflow-x:auto;
+  max-height:300px;
+  overflow-y:auto;
+  white-space:pre;
+}
+
+/* ── 배지 ── */
+.badge{
+  display:inline-block;
+  padding:2px 10px;
+  border-radius:99px;
+  font-size:.72rem;
+  font-weight:700;
+}
+.badge-accent{background:rgba(124,92,252,.2);color:var(--accent);}
+.badge-success{background:rgba(34,197,94,.15);color:var(--success);}
+
+/* ── 스크롤바 ── */
+::-webkit-scrollbar{width:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:var(--border2);border-radius:3px;}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<!-- ━━━ 사이드바 ━━━ -->
+<aside class="sidebar">
+  <div class="logo"><span>🥚</span>부화 스튜디오</div>
+  <nav class="nav">
+    <div class="nav-item active" data-page="generate" onclick="switchPage('generate',this)">
+      <span class="icon">✨</span> 이미지 생성
+    </div>
+    <div class="nav-item" data-page="library" onclick="switchPage('library',this)">
+      <span class="icon">📚</span> 라이브러리
+    </div>
+    <div class="nav-item" data-page="export" onclick="switchPage('export',this)">
+      <span class="icon">📦</span> 내보내기
+    </div>
+    <div class="nav-item" data-page="settings" onclick="switchPage('settings',this)">
+      <span class="icon">⚙️</span> 설정
+    </div>
+  </nav>
+  <div class="sidebar-footer">
+    관리자 전용 도구<br/>
+    <span id="lib-count-side">캐릭터 0개</span>
+  </div>
+</aside>
+
+<!-- ━━━ 메인 ━━━ -->
+<main class="main">
+
+<!-- ── 페이지: 이미지 생성 ── -->
+<section class="page active" id="page-generate">
+  <div class="page-title">✨ 이미지 생성</div>
+  <div class="page-desc">캐릭터 이미지를 업로드하면 단계별 부화 이미지를 자동 생성합니다.</div>
+
+  <div class="card">
+    <div class="card-title">API 설정</div>
+    <div class="field">
+      <label>Gemini API Key</label>
+      <div class="key-row">
+        <input type="password" id="apiKey" placeholder="AIza..."/>
+        <button class="btn btn-ghost btn-sm" onclick="checkKey()">확인</button>
+      </div>
+      <div class="key-status" id="keyStatus"></div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">캐릭터 정보</div>
+    <div class="row">
+      <div class="field">
+        <label>캐릭터 이름 *</label>
+        <input type="text" id="charName" placeholder="예) 다이아니핑"/>
+      </div>
+      <div class="field">
+        <label>태그 (쉼표로 구분)</label>
+        <input type="text" id="charTags" placeholder="예) 티니핑, 파란색, 하트"/>
+      </div>
+    </div>
+    <div class="field">
+      <label>캐릭터 이미지 업로드 *</label>
+      <div class="upload-zone" id="uploadZone">
+        <input type="file" id="fileInput" accept="image/*" onchange="handleFile(this)"/>
+        <div id="uploadContent">
+          <div class="upload-icon">🖼️</div>
+          <div class="upload-label">클릭하거나 드래그</div>
+          <div class="upload-sub">PNG, JPG, WEBP 지원</div>
+        </div>
+      </div>
+    </div>
+    <div class="field">
+      <label>부화 단계 수</label>
+      <div class="step-chips" id="stepChips">
+        <button class="step-chip" data-n="3" onclick="selectStep(this)">3단계</button>
+        <button class="step-chip active" data-n="6" onclick="selectStep(this)">6단계</button>
+        <button class="step-chip" data-n="8" onclick="selectStep(this)">8단계</button>
+        <button class="step-chip" data-n="10" onclick="selectStep(this)">10단계</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="alert alert-error" id="errBox"></div>
+
+  <button class="btn btn-primary btn-full" id="btnGenerate" onclick="startGenerate()" disabled>
+    🥚 부화 이미지 생성 시작
+  </button>
+
+  <!-- 진행 표시 -->
+  <div class="progress-wrap" id="progressWrap">
+    <div class="progress-label" id="progressLabel">준비 중...</div>
+    <div class="prog-bar-bg">
+      <div class="prog-bar-fill" id="progFill" style="width:0%"></div>
+    </div>
+    <div class="step-statuses" id="stepStatuses"></div>
+  </div>
+
+  <!-- 결과 -->
+  <div id="resultSection" style="display:none;">
+    <div class="card">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px;">
+        <div class="card-title" style="margin-bottom:0;">생성 완료</div>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="downloadZip()">📦 ZIP 저장</button>
+          <button class="btn btn-primary btn-sm" onclick="addToLibrary()">📚 라이브러리에 추가</button>
+        </div>
+      </div>
+      <div class="gallery" id="gallery"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ── 페이지: 라이브러리 ── -->
+<section class="page" id="page-library">
+  <div class="lib-header">
+    <div>
+      <div class="page-title">📚 이미지 라이브러리</div>
+      <div class="page-desc" style="margin-bottom:0;">저장된 캐릭터 목록입니다.</div>
+    </div>
+    <span class="badge badge-accent" id="libCount">0개</span>
+  </div>
+
+  <div class="alert alert-success" id="libAlert"></div>
+  <div class="lib-grid" id="libGrid">
+    <div style="color:var(--muted);font-size:.9rem;padding:40px 0;text-align:center;grid-column:1/-1;">
+      아직 추가된 캐릭터가 없습니다.<br/>이미지 생성 후 라이브러리에 추가해보세요.
+    </div>
+  </div>
+</section>
+
+<!-- ── 페이지: 내보내기 ── -->
+<section class="page" id="page-export">
+  <div class="page-title">📦 내보내기</div>
+  <div class="page-desc">라이브러리를 JSON으로 내보내거나 전체 패키지를 다운받습니다.</div>
+
+  <div class="card">
+    <div class="card-title">library.json 미리보기</div>
+    <div class="json-box" id="jsonPreview">{}</div>
+    <div style="display:flex;gap:10px;margin-top:14px;">
+      <button class="btn btn-ghost" onclick="refreshJson()">🔄 새로고침</button>
+      <button class="btn btn-primary" onclick="downloadJson()">⬇️ JSON 다운로드</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">전체 패키지 다운로드</div>
+    <p style="font-size:.88rem;color:var(--muted2);margin-bottom:16px;">
+      library.json + 모든 이미지 파일을 ZIP으로 묶어서 다운로드합니다.<br/>
+      GitHub Pages에 올리면 바로 서비스 가능합니다.
+    </p>
+    <button class="btn btn-primary" onclick="downloadFullPackage()">📦 전체 패키지 다운로드</button>
+  </div>
+
+  <div class="card">
+    <div class="card-title">GitHub Pages 배포 가이드</div>
+    <div style="font-size:.85rem;color:var(--muted2);line-height:1.8;">
+      1. GitHub 저장소 생성 (예: <code style="color:var(--accent)">egg-library</code>)<br/>
+      2. 전체 패키지 ZIP 압축 해제 후 저장소에 업로드<br/>
+      3. Settings → Pages → main 브랜치 배포<br/>
+      4. 사용자 앱에서 <code style="color:var(--accent)">library.json</code> URL 설정<br/>
+      5. 새 캐릭터 추가 시 JSON + 이미지만 추가하면 자동 반영
+    </div>
+  </div>
+</section>
+
+<!-- ── 페이지: 설정 ── -->
+<section class="page" id="page-settings">
+  <div class="page-title">⚙️ 설정</div>
+  <div class="page-desc">스튜디오 환경을 설정합니다.</div>
+
+  <div class="card">
+    <div class="card-title">라이브러리 관리</div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost" onclick="exportLibBackup()">💾 백업 내보내기</button>
+      <button class="btn btn-ghost" onclick="document.getElementById('importFile').click()">📂 백업 불러오기</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importLibBackup(this)"/>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title" style="color:var(--danger);">위험 구역</div>
+    <p style="font-size:.88rem;color:var(--muted2);margin-bottom:14px;">라이브러리 전체를 초기화합니다. 되돌릴 수 없습니다.</p>
+    <button class="btn btn-danger" onclick="clearLibrary()">🗑️ 라이브러리 초기화</button>
+  </div>
+</section>
+
+</main>
+</div>
+
+<script>
+// ━━━ 전역 상태 ━━━
+let uploadedBase64 = null;
+let uploadedMime = 'image/png';
+let selectedSteps = 6;
+let generatedImages = []; // [{blob, dataUrl, label}]
+let pendingChar = null;   // 라이브러리 추가 대기 중인 데이터
+
+// ━━━ 라이브러리 (localStorage) ━━━
+function loadLib() {
+  try { return JSON.parse(localStorage.getItem('eggLibrary') || '{"version":"1.0","characters":[]}'); }
+  catch { return {version:'1.0',characters:[]}; }
+}
+function saveLib(lib) {
+  lib.updated = new Date().toISOString().slice(0,10);
+  localStorage.setItem('eggLibrary', JSON.stringify(lib, null, 2));
+  updateLibCount();
+}
+function updateLibCount() {
+  const lib = loadLib();
+  const n = lib.characters.length;
+  document.getElementById('libCount').textContent = n + '개';
+  document.getElementById('lib-count-side').textContent = '캐릭터 ' + n + '개';
+}
+
+// ━━━ 페이지 전환 ━━━
+function switchPage(id, el) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  el.classList.add('active');
+  if (id === 'library') renderLibrary();
+  if (id === 'export') refreshJson();
+}
+
+// ━━━ 파일 업로드 ━━━
+function handleFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  uploadedMime = file.type || 'image/png';
+  const reader = new FileReader();
+  reader.onload = e => {
+    uploadedBase64 = e.target.result.split(',')[1];
+    const zone = document.getElementById('uploadZone');
+    const existing = zone.querySelector('.preview-img');
+    if (existing) existing.remove();
+    const img = document.createElement('img');
+    img.className = 'preview-img';
+    img.src = e.target.result;
+    zone.appendChild(img);
+    document.getElementById('uploadContent').style.display = 'none';
+    checkReady();
+  };
+  reader.readAsDataURL(file);
+}
+
+// 드래그앤드롭
+const zone = document.getElementById('uploadZone');
+zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('drag'); });
+zone.addEventListener('dragleave', () => zone.classList.remove('drag'));
+zone.addEventListener('drop', e => {
+  e.preventDefault(); zone.classList.remove('drag');
+  const f = e.dataTransfer.files[0];
+  if (f && f.type.startsWith('image/')) {
+    const dt = new DataTransfer(); dt.items.add(f);
+    document.getElementById('fileInput').files = dt.files;
+    handleFile(document.getElementById('fileInput'));
+  }
+});
+
+// ━━━ API 키 확인 ━━━
+async function checkKey() {
+  const key = document.getElementById('apiKey').value.trim();
+  const status = document.getElementById('keyStatus');
+  if (!key) { status.className='key-status fail'; status.textContent='키를 입력해주세요.'; return; }
+  status.className='key-status'; status.textContent='확인 중...'; status.style.display='block';
+  try {
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models?key=${key}`
+    );
+    if (res.ok) {
+      status.className='key-status ok'; status.textContent='✅ API 키가 유효합니다.';
+      localStorage.setItem('geminiKey', key);
+      checkReady();
+    } else {
+      const d = await res.json();
+      status.className='key-status fail'; status.textContent='❌ ' + (d.error?.message || '유효하지 않은 키입니다.');
+    }
+  } catch(e) {
+    status.className='key-status fail'; status.textContent='❌ 네트워크 오류: ' + e.message;
+  }
+}
+
+function checkReady() {
+  const key = document.getElementById('apiKey').value.trim();
+  const name = document.getElementById('charName').value.trim();
+  document.getElementById('btnGenerate').disabled = !(key && name && uploadedBase64);
+}
+document.getElementById('apiKey').addEventListener('input', checkReady);
+document.getElementById('charName').addEventListener('input', checkReady);
+
+// ━━━ 단계 선택 ━━━
+function selectStep(el) {
+  document.querySelectorAll('.step-chip').forEach(c => c.classList.remove('active'));
+  el.classList.add('active');
+  selectedSteps = parseInt(el.dataset.n);
+}
+
+// ━━━ 부화 단계 정의 ━━━
+function getStageLabels(n) {
+  const pool = [
+    {emoji:'🥚',label:'완전한 알'},
+    {emoji:'🔍',label:'미세한 균열'},
+    {emoji:'💥',label:'균열 확장'},
+    {emoji:'👀',label:'눈이 보임'},
+    {emoji:'🐣',label:'머리 등장'},
+    {emoji:'✋',label:'상체 나옴'},
+    {emoji:'🦶',label:'거의 다 나옴'},
+    {emoji:'🌟',label:'완전 부화'},
+    {emoji:'✨',label:'첫 날갯짓'},
+    {emoji:'🎉',label:'완전한 모습'},
+  ];
+  if (n <= pool.length) return pool.slice(0, n);
+  const res = [...pool];
+  while (res.length < n) res.splice(-1,0,{emoji:'🌱',label:`성장 ${res.length}`});
+  return res.slice(0, n);
+}
+
+// ━━━ 이미지 생성 ━━━
+async function startGenerate() {
+  const key = document.getElementById('apiKey').value.trim();
+  const name = document.getElementById('charName').value.trim();
+  if (!key || !name || !uploadedBase64) return;
+  showErr('');
+  generatedImages = [];
+  document.getElementById('gallery').innerHTML = '';
+  document.getElementById('resultSection').style.display = 'none';
+  const pw = document.getElementById('progressWrap');
+  pw.style.display = 'block';
+  document.getElementById('btnGenerate').disabled = true;
+
+  const stages = getStageLabels(selectedSteps);
+  const statusEl = document.getElementById('stepStatuses');
+  statusEl.innerHTML = stages.map((s,i) =>
+    `<span class="step-dot" id="dot-${i}">${s.emoji} ${s.label}</span>`
+  ).join('');
+
+  let prevBase64 = uploadedBase64;
+  let prevMime   = uploadedMime;
+  let failCount  = 0;
+
+  for (let i = 0; i < stages.length; i++) {
+    const dot = document.getElementById('dot-'+i);
+    dot.classList.add('active');
+    setProgress(i, stages.length, `${stages[i].label} 생성 중... (${i+1}/${stages.length})`);
+
+    const stageDesc = buildPrompt(stages, i, name, selectedSteps);
+    try {
+      const {base64, mime} = await callGemini(key, stageDesc, prevBase64, prevMime);
+      const blob = base64ToBlob(base64, mime);
+      const url  = URL.createObjectURL(blob);
+      generatedImages.push({blob, dataUrl: url, label: stages[i].label, emoji: stages[i].emoji});
+      addGalleryItem(url, stages[i].emoji + ' ' + stages[i].label, i);
+      dot.classList.remove('active'); dot.classList.add('done');
+      prevBase64 = base64; prevMime = mime;
+    } catch(e) {
+      dot.classList.remove('active'); dot.classList.add('fail');
+      failCount++;
+      console.error(`Stage ${i} error:`, e);
+      if (failCount >= 3) { showErr('연속 3회 실패. 생성을 중단합니다. API 키와 네트워크를 확인해주세요.'); break; }
+    }
+  }
+
+  setProgress(stages.length, stages.length, '완료!');
+  document.getElementById('btnGenerate').disabled = false;
+  if (generatedImages.length > 0) document.getElementById('resultSection').style.display = 'block';
+}
+
+function buildPrompt(stages, i, name, total) {
+  const isFirst = i === 0;
+  const isLast  = i === total - 1;
+  if (isFirst) {
+    return `Create an illustration of a decorated egg that contains the character "${name}". 
+The egg should be colorful and match the color scheme/style of the character image provided. 
+Stage 1 of ${total}: The egg is completely whole, no cracks. 
+Make it cute, in the same artistic style as the uploaded character.
+Output only the egg image with a soft background.`;
+  }
+  if (isLast) {
+    return `Create an illustration showing the character "${name}" fully hatched from an egg.
+The character should be completely emerged and visible, with broken egg shell pieces around it.
+Stage ${i+1} of ${total}: Complete hatching! The character is fully born and looks happy.
+Match the style and colors of the character from the reference image exactly.
+Make it celebratory and joyful.`;
+  }
+  const pct = Math.round((i / (total-1)) * 100);
+  return `Create a hatching egg illustration for the character "${name}".
+Stage ${i+1} of ${total} (${pct}% hatched): ${stages[i].label}.
+Use the previous stage image as reference for the egg style and crack progression.
+The character parts visible should match the reference character exactly.
+Progress the hatching further than the previous stage — show more of the character emerging.
+Keep the same cute artistic style throughout.`;
+}
+
+async function callGemini(key, prompt, imageBase64, imageMime) {
+  const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-preview-image-generation:generateContent?key=${key}`;
+  const body = {
+    contents: [{
+      parts: [
+        {text: prompt},
+        {inline_data: {mime_type: imageMime, data: imageBase64}}
+      ]
+    }],
+    generationConfig: {responseModalities: ['TEXT','IMAGE']}
+  };
+  const res = await fetch(url, {
+    method:'POST',
+    headers:{'Content-Type':'application/json'},
+    body: JSON.stringify(body)
+  });
+  if (!res.ok) {
+    const d = await res.json().catch(()=>({}));
+    throw new Error(d.error?.message || `HTTP ${res.status}`);
+  }
+  const data = await res.json();
+  for (const part of (data.candidates?.[0]?.content?.parts || [])) {
+    if (part.inline_data?.data) return {base64: part.inline_data.data, mime: part.inline_data.mime_type || 'image/png'};
+  }
+  throw new Error('이미지 데이터가 응답에 없습니다.');
+}
+
+// ━━━ 유틸 ━━━
+function setProgress(done, total, label) {
+  document.getElementById('progressLabel').textContent = label;
+  document.getElementById('progFill').style.width = Math.round(done/total*100) + '%';
+}
+function showErr(msg) {
+  const el = document.getElementById('errBox');
+  if (msg) { el.textContent = msg; el.classList.add('show'); }
+  else el.classList.remove('show');
+}
+function base64ToBlob(b64, mime) {
+  const bin = atob(b64);
+  const arr = new Uint8Array(bin.length);
+  for (let i=0;i<bin.length;i++) arr[i]=bin.charCodeAt(i);
+  return new Blob([arr], {type: mime});
+}
+function addGalleryItem(url, label, i) {
+  const item = document.createElement('div');
+  item.className = 'gallery-item';
+  item.innerHTML = `<img src="${url}" alt="${label}"/>
+    <div class="gallery-caption">
+      <span class="gallery-label">${label}</span>
+      <button class="btn-dl-sm" onclick="dlSingle(${i})">저장</button>
+    </div>`;
+  document.getElementById('gallery').appendChild(item);
+}
+function dlSingle(i) {
+  const {blob, label} = generatedImages[i];
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `stage${i+1}_${label}.png`;
+  a.click();
+}
+
+// ━━━ ZIP 다운로드 ━━━
+async function downloadZip() {
+  if (!generatedImages.length) return;
+  const zip = new JSZip();
+  const name = document.getElementById('charName').value.trim() || 'character';
+  const folder = zip.folder(name);
+  for (let i=0; i<generatedImages.length; i++) {
+    const buf = await generatedImages[i].blob.arrayBuffer();
+    folder.file(`stage${i+1}.png`, buf);
+  }
+  const blob = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download = name + '_stages.zip'; a.click();
+}
+
+// ━━━ 라이브러리 추가 ━━━
+async function addToLibrary() {
+  if (!generatedImages.length) return;
+  const name = document.getElementById('charName').value.trim();
+  const tagsRaw = document.getElementById('charTags').value.trim();
+  const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
+  const id = name.toLowerCase().replace(/[^a-z0-9가-힣]/g,'_') + '_' + Date.now();
+
+  // dataURL 배열로 저장 (localStorage — 실제 배포 시 CDN URL로 교체)
+  const stages = generatedImages.map(img => img.dataUrl);
+  const thumbnail = stages[stages.length - 1];
+
+  const lib = loadLib();
+  lib.characters.push({
+    id, name, tags,
+    totalStages: generatedImages.length,
+    stages,
+    thumbnail,
+    createdAt: new Date().toISOString().slice(0,10)
+  });
+  saveLib(lib);
+
+  // 성공 피드백
+  document.getElementById('btnGenerate').textContent = '✅ 추가 완료!';
+  setTimeout(() => document.getElementById('btnGenerate').textContent='🥚 부화 이미지 생성 시작', 2000);
+  switchPage('library', document.querySelector('[data-page="library"]'));
+}
+
+// ━━━ 라이브러리 렌더링 ━━━
+function renderLibrary() {
+  const lib = loadLib();
+  const grid = document.getElementById('libGrid');
+  updateLibCount();
+  if (!lib.characters.length) {
+    grid.innerHTML = `<div style="color:var(--muted);font-size:.9rem;padding:40px 0;text-align:center;grid-column:1/-1;">
+      아직 추가된 캐릭터가 없습니다.<br/>이미지 생성 후 라이브러리에 추가해보세요.</div>`;
+    return;
+  }
+  grid.innerHTML = lib.characters.map((c,idx) => `
+    <div class="char-card">
+      <div class="char-card-img">
+        ${c.thumbnail ? `<img src="${c.thumbnail}" alt="${c.name}"/>` : '🥚'}
+      </div>
+      <div class="char-card-body">
+        <div class="char-name">${c.name}</div>
+        <div class="char-meta">${c.totalStages}단계 · ${c.createdAt}</div>
+        <div class="char-tags">${c.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>
+        <div class="char-actions">
+          <button class="btn btn-ghost btn-sm" onclick="previewChar(${idx})">미리보기</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteChar(${idx})">삭제</button>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function deleteChar(idx) {
+  if (!confirm('이 캐릭터를 삭제하시겠습니까?')) return;
+  const lib = loadLib();
+  lib.characters.splice(idx,1);
+  saveLib(lib);
+  renderLibrary();
+  showLibAlert('삭제되었습니다.');
+}
+
+function previewChar(idx) {
+  const lib = loadLib();
+  const c = lib.characters[idx];
+  const w = window.open('','_blank');
+  w.document.write(`<!DOCTYPE html><html><head><meta charset="UTF-8">
+  <title>${c.name} 미리보기</title>
+  <style>body{background:#0a0a0f;color:#e8e8f0;font-family:sans-serif;padding:24px;text-align:center;}
+  h2{margin-bottom:16px;}
+  .grid{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;}
+  .item{text-align:center;} img{width:180px;height:180px;object-fit:contain;background:#111;border-radius:8px;border:1px solid #2a2a3a;}
+  p{margin-top:8px;font-size:12px;color:#6868a0;}</style></head>
+  <body><h2>🥚 ${c.name} 부화 과정</h2>
+  <div class="grid">${c.stages.map((s,i)=>`<div class="item"><img src="${s}"/><p>${i+1}단계</p></div>`).join('')}</div>
+  </body></html>`);
+  w.document.close();
+}
+
+function showLibAlert(msg) {
+  const el = document.getElementById('libAlert');
+  el.textContent = msg; el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// ━━━ JSON 내보내기 ━━━
+function refreshJson() {
+  const lib = loadLib();
+  // 미리보기용: dataUrl은 너무 길어서 [BASE64 IMAGE] 로 축약
+  const preview = JSON.parse(JSON.stringify(lib));
+  preview.characters.forEach(c => {
+    c.stages = c.stages.map((_,i) => `images/${c.id}/stage${i+1}.png`);
+    c.thumbnail = `images/${c.id}/stage${c.totalStages}.png`;
+  });
+  document.getElementById('jsonPreview').textContent = JSON.stringify(preview, null, 2);
+}
+
+function downloadJson() {
+  const lib = loadLib();
+  const exportLib = JSON.parse(JSON.stringify(lib));
+  exportLib.characters.forEach(c => {
+    c.stages = c.stages.map((_,i) => `images/${c.id}/stage${i+1}.png`);
+    c.thumbnail = `images/${c.id}/stage${c.totalStages}.png`;
+  });
+  const blob = new Blob([JSON.stringify(exportLib,null,2)], {type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='library.json'; a.click();
+}
+
+async function downloadFullPackage() {
+  const lib = loadLib();
+  if (!lib.characters.length) { alert('라이브러리가 비어 있습니다.'); return; }
+  const zip = new JSZip();
+  const exportLib = JSON.parse(JSON.stringify(lib));
+
+  for (const c of lib.characters) {
+    for (let i=0; i<c.stages.length; i++) {
+      const dataUrl = c.stages[i];
+      if (dataUrl.startsWith('data:')) {
+        const base64 = dataUrl.split(',')[1];
+        const mime   = dataUrl.split(';')[0].split(':')[1];
+        const ext    = mime.includes('png')?'png':'jpg';
+        zip.file(`images/${c.id}/stage${i+1}.${ext}`, base64, {base64:true});
+      }
+    }
+  }
+
+  exportLib.characters.forEach(c => {
+    c.stages = c.stages.map((s,i)=>{
+      if(s.startsWith('data:')) return `images/${c.id}/stage${i+1}.png`;
+      return s;
+    });
+    c.thumbnail = `images/${c.id}/stage${c.totalStages}.png`;
+  });
+  zip.file('library.json', JSON.stringify(exportLib,null,2));
+
+  // 사용자 앱 템플릿 (2단계에서 채움)
+  zip.file('README.txt', `부화 스튜디오 패키지\n====================\n
+1. 이 폴더 전체를 GitHub 저장소에 업로드하세요.
+2. Settings > Pages > main 브랜치로 배포하세요.
+3. 배포된 URL을 사용자 앱의 LIBRARY_URL에 입력하세요.
+
+폴더 구조:
+  library.json        - 캐릭터 메타데이터
+  images/             - 캐릭터별 부화 이미지
+  `);
+
+  const blob = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='egg_library_package.zip'; a.click();
+}
+
+// ━━━ 설정 ━━━
+function exportLibBackup() {
+  const lib = loadLib();
+  const blob = new Blob([JSON.stringify(lib,null,2)],{type:'application/json'});
+  const a = document.createElement('a'); a.href=URL.createObjectURL(blob);
+  a.download='egg_library_backup_'+new Date().toISOString().slice(0,10)+'.json'; a.click();
+}
+function importLibBackup(input) {
+  const file = input.files[0]; if(!file) return;
+  const r = new FileReader();
+  r.onload = e => {
+    try {
+      const lib = JSON.parse(e.target.result);
+      if (!lib.characters) throw new Error('올바른 형식이 아닙니다.');
+      if (!confirm(`${lib.characters.length}개 캐릭터를 불러옵니다. 기존 데이터를 덮어씁니까?`)) return;
+      saveLib(lib);
+      alert('불러오기 완료!');
+    } catch(err) { alert('오류: ' + err.message); }
+  };
+  r.readAsText(file);
+}
+function clearLibrary() {
+  if (!confirm('라이브러리 전체를 삭제합니다. 정말 진행하시겠습니까?')) return;
+  if (!confirm('되돌릴 수 없습니다. 최종 확인합니다.')) return;
+  saveLib({version:'1.0',characters:[]});
+  alert('초기화 완료');
+}
+
+// ━━━ 초기화 ━━━
+updateLibCount();
+// 저장된 키 복원
+const savedKey = localStorage.getItem('geminiKey');
+if (savedKey) document.getElementById('apiKey').value = savedKey;
+</script>
+</body>
+</html>

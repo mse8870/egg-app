@@ -1,0 +1,847 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>🌸 아침 미션</title>
+<link href="https://fonts.googleapis.com/css2?family=Gaegu:wght@400;700&family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+:root{
+  --pink:#FF85C1;--pink-l:#FFD6EE;--pink-p:#FFF0F8;
+  --lav:#C9A6FF;--lav-l:#EEE0FF;
+  --gold:#FFD700;--teal:#6EE7B7;
+  --white:#fff;--main:#5A3060;--sub:#9A6FA8;--hint:#C4A0D0;
+  --bg:linear-gradient(135deg,#FFF0F8 0%,#F0E8FF 50%,#E8F8FF 100%);
+  --shadow:0 4px 20px rgba(180,120,220,.12);
+  --r:18px;--r-sm:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);min-height:100vh;color:var(--main);overflow-x:hidden;}
+.screen{display:none;}.screen.active{display:block;}
+.wrap{width:100%;max-width:480px;margin:0 auto;padding:32px 16px 80px;display:flex;flex-direction:column;align-items:center;}
+
+/* 버튼 */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:12px 24px;border-radius:99px;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:.95rem;transition:all .18s;}
+.btn-primary{background:var(--pink);color:#fff;box-shadow:0 4px 14px rgba(255,133,193,.35);}
+.btn-primary:hover{transform:translateY(-2px);}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed;transform:none;}
+.btn-ghost{background:#fff;color:var(--main);border:2px solid var(--pink-l);}
+.btn-ghost:hover{border-color:var(--pink);background:var(--pink-p);}
+.btn-sm{padding:8px 16px;font-size:.82rem;}
+.btn-full{width:100%;}
+
+/* 카드 */
+.card{width:100%;background:#fff;border-radius:var(--r);padding:20px;box-shadow:var(--shadow);margin-bottom:16px;}
+.card-label{font-size:.75rem;font-weight:700;color:var(--sub);text-transform:uppercase;letter-spacing:.08em;margin-bottom:12px;}
+
+/* 탭 */
+.tabs{display:flex;gap:0;width:100%;background:var(--pink-p);border-radius:99px;padding:4px;margin-bottom:16px;}
+.tab{flex:1;padding:9px;border-radius:99px;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:.85rem;color:var(--sub);background:transparent;transition:all .15s;}
+.tab.active{background:var(--pink);color:#fff;}
+
+/* 검색 */
+.search-row{display:flex;gap:8px;margin-bottom:12px;}
+.search-input{flex:1;padding:10px 14px;border-radius:99px;border:2px solid var(--pink-l);outline:none;font-family:'Noto Sans KR',sans-serif;font-size:.9rem;color:var(--main);background:var(--pink-p);}
+.search-input:focus{border-color:var(--pink);}
+
+/* 캐릭터 그리드 */
+.char-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(88px,1fr));gap:10px;max-height:280px;overflow-y:auto;}
+.char-item{border-radius:var(--r-sm);border:2px solid var(--pink-l);background:var(--pink-p);padding:8px;cursor:pointer;text-align:center;transition:all .15s;}
+.char-item:hover{border-color:var(--pink);background:#fff;transform:translateY(-2px);}
+.char-item.selected{border-color:var(--pink);background:var(--pink-l);box-shadow:0 0 0 3px rgba(255,133,193,.25);}
+.char-thumb{width:100%;aspect-ratio:1;object-fit:contain;background:#f9f0ff;border-radius:8px;margin-bottom:5px;display:flex;align-items:center;justify-content:center;font-size:1.6rem;overflow:hidden;}
+.char-thumb img{width:100%;height:100%;object-fit:contain;}
+.char-item-name{font-size:.7rem;font-weight:700;color:var(--main);line-height:1.2;}
+.char-empty{color:var(--hint);font-size:.85rem;text-align:center;padding:28px 0;grid-column:1/-1;}
+
+/* 생성 탭 */
+.upload-zone{border:2px dashed var(--pink-l);border-radius:var(--r-sm);padding:24px;text-align:center;cursor:pointer;transition:all .2s;position:relative;background:var(--pink-p);}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--pink);background:#fff;}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.preview-img{width:100%;max-height:160px;object-fit:contain;border-radius:8px;margin-top:10px;border:1px solid var(--pink-l);}
+
+/* 횟수 배지 */
+.quota-bar{display:flex;align-items:center;justify-content:space-between;background:var(--lav-l);border-radius:var(--r-sm);padding:12px 16px;margin-bottom:12px;}
+.quota-label{font-size:.85rem;font-weight:700;color:#6d3eb0;}
+.quota-dots{display:flex;gap:6px;}
+.quota-dot{width:12px;height:12px;border-radius:50%;background:var(--lav-l);border:2px solid var(--lav);}
+.quota-dot.used{background:var(--lav);border-color:#9f6ede;}
+.quota-dot.available{background:var(--pink);border-color:var(--pink);}
+
+/* 진행바 */
+.prog-wrap{display:none;background:var(--pink-p);border-radius:var(--r-sm);padding:14px;margin-bottom:12px;}
+.prog-label{font-size:.85rem;font-weight:700;color:var(--main);margin-bottom:8px;}
+.prog-bg{background:var(--pink-l);border-radius:99px;height:7px;overflow:hidden;}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--pink),var(--lav));border-radius:99px;transition:width .4s ease;}
+.prog-steps{display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;}
+.prog-dot{padding:3px 8px;border-radius:99px;font-size:.7rem;font-weight:700;background:#fff;color:var(--hint);border:1px solid var(--pink-l);transition:all .3s;}
+.prog-dot.done{background:var(--pink-p);color:var(--pink);border-color:var(--pink);}
+.prog-dot.active{background:var(--lav-l);color:#7a3ec8;border-color:var(--lav);animation:pulse .8s infinite;}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+
+/* 갤러리 */
+.mini-gallery{display:grid;grid-template-columns:repeat(auto-fill,minmax(100px,1fr));gap:8px;margin-top:10px;}
+.mini-item{border-radius:8px;overflow:hidden;border:1px solid var(--pink-l);background:var(--pink-p);}
+.mini-item img{width:100%;aspect-ratio:1;object-fit:contain;display:block;}
+.mini-caption{font-size:.65rem;color:var(--sub);padding:4px 6px;text-align:center;font-weight:700;}
+
+/* 선택 미리보기 */
+.sel-preview{display:flex;align-items:center;gap:12px;background:var(--lav-l);border-radius:var(--r-sm);padding:12px;margin-top:12px;}
+.sel-img{width:52px;height:52px;object-fit:contain;border-radius:8px;background:#f0e8ff;}
+.sel-name{font-weight:700;font-size:.95rem;}
+.sel-sub{font-size:.78rem;color:var(--sub);margin-top:2px;}
+
+/* 미션 수 */
+.count-chips{display:flex;gap:6px;flex-wrap:wrap;}
+.count-chip{padding:7px 14px;border-radius:99px;border:2px solid var(--pink-l);background:var(--pink-p);color:var(--sub);cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:.82rem;transition:all .15s;}
+.count-chip.active{background:var(--pink);color:#fff;border-color:var(--pink);}
+
+/* ── 게임 화면 ── */
+#screen-game{max-width:500px;margin:0 auto;padding:20px 16px 80px;}
+.game-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;}
+.game-title{font-family:'Gaegu',cursive;font-size:1.5rem;color:var(--pink);}
+.btn-back{background:none;border:1.5px solid var(--pink-l);color:var(--sub);border-radius:99px;padding:6px 12px;cursor:pointer;font-size:.75rem;font-family:'Noto Sans KR',sans-serif;font-weight:700;transition:all .15s;}
+.btn-back:hover{border-color:var(--pink);color:var(--pink);}
+.egg-section{background:#fff;border-radius:var(--r);padding:18px;margin-bottom:14px;box-shadow:var(--shadow);text-align:center;}
+.egg-wrap{width:150px;height:168px;margin:0 auto 10px;display:flex;align-items:center;justify-content:center;}
+.egg-stage-img{width:100%;height:100%;object-fit:contain;border-radius:10px;transition:opacity .4s;}
+.egg-text{font-family:'Gaegu',cursive;font-size:.95rem;color:var(--sub);}
+.star-row{display:flex;gap:4px;justify-content:center;flex-wrap:wrap;margin-top:8px;}
+.star{font-size:1.1rem;filter:grayscale(1)opacity(.3);transition:all .3s;}
+.star.lit{filter:none;transform:scale(1.15);}
+.mission-list{display:flex;flex-direction:column;gap:10px;}
+.mission-card{background:#fff;border-radius:var(--r-sm);padding:13px 15px;display:flex;align-items:center;gap:12px;box-shadow:0 2px 10px rgba(180,120,220,.07);border:2px solid transparent;cursor:pointer;transition:all .18s;user-select:none;}
+.mission-card:hover{border-color:var(--pink-l);transform:translateX(3px);}
+.mission-card.done{background:var(--pink-p);border-color:var(--pink-l);}
+.mission-num{width:30px;height:30px;border-radius:50%;background:var(--pink-l);color:var(--pink);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.88rem;flex-shrink:0;transition:all .2s;}
+.mission-card.done .mission-num{background:var(--pink);color:#fff;}
+.mission-info{flex:1;}
+.mission-name{font-weight:700;font-size:.92rem;}
+.mission-desc{font-size:.78rem;color:var(--sub);margin-top:2px;}
+.check-btn{flex-shrink:0;padding:6px 12px;border-radius:99px;border:none;cursor:pointer;font-family:'Noto Sans KR',sans-serif;font-weight:700;font-size:.78rem;background:var(--pink-l);color:var(--pink);transition:all .15s;}
+.check-btn:hover{background:var(--pink);color:#fff;}
+.check-btn.done-btn{background:var(--pink);color:#fff;}
+
+/* ── 완료 화면 ── */
+#screen-complete{min-height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;text-align:center;}
+.complete-emoji{font-size:4.5rem;margin-bottom:14px;animation:bounce .6s infinite alternate;}
+@keyframes bounce{to{transform:translateY(-10px);}}
+.complete-title{font-family:'Gaegu',cursive;font-size:2.2rem;color:var(--pink);margin-bottom:6px;}
+.complete-sub{color:var(--sub);font-size:.95rem;margin-bottom:24px;}
+.final-egg{width:160px;height:180px;margin:0 auto 24px;border-radius:var(--r);overflow:hidden;box-shadow:0 8px 30px rgba(180,120,220,.2);}
+.final-egg img{width:100%;height:100%;object-fit:contain;background:var(--pink-p);}
+
+/* 색종이 */
+.confetti{position:fixed;pointer-events:none;z-index:9999;top:0;left:0;width:100%;height:100%;}
+.cf{position:absolute;width:8px;height:8px;border-radius:2px;animation:cfFall linear forwards;}
+@keyframes cfFall{to{transform:translateY(110vh) rotate(720deg);opacity:0;}}
+
+/* 로딩 */
+.loading-overlay{position:fixed;inset:0;background:rgba(255,240,248,.85);display:none;align-items:center;justify-content:center;flex-direction:column;gap:10px;z-index:100;font-weight:700;color:var(--pink);}
+.loading-overlay.show{display:flex;}
+.spinner{width:36px;height:36px;border:4px solid var(--pink-l);border-top-color:var(--pink);border-radius:50%;animation:spin .8s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+
+/* 모달 */
+.modal-overlay{position:fixed;inset:0;background:rgba(90,48,96,.5);z-index:200;display:none;align-items:flex-end;justify-content:center;}
+.modal-overlay.show{display:flex;}
+.modal{background:#fff;border-radius:24px 24px 0 0;padding:28px 20px 40px;width:100%;max-width:480px;}
+.modal-title{font-family:'Gaegu',cursive;font-size:1.4rem;color:var(--pink);margin-bottom:6px;}
+.modal-sub{font-size:.85rem;color:var(--sub);margin-bottom:20px;}
+.modal-close{background:none;border:none;font-size:1.5rem;cursor:pointer;float:right;color:var(--hint);}
+
+::-webkit-scrollbar{width:4px;}
+::-webkit-scrollbar-thumb{background:var(--pink-l);border-radius:2px;}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loading"><div class="spinner"></div><span id="loadingText">불러오는 중...</span></div>
+<div class="confetti" id="confetti"></div>
+
+<!-- API 키 입력 모달 -->
+<div class="modal-overlay" id="apiKeyModal">
+  <div class="modal">
+    <div class="modal-title">🔑 API 키 설정</div>
+    <div class="modal-sub">직접 만들기 기능을 사용하려면 Gemini API 키가 필요해요.<br/>키는 이 기기에만 저장되고 외부로 전송되지 않아요.</div>
+    <input type="password" id="apiKeyInput" placeholder="AIza..."
+      style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid var(--pink-l);background:var(--pink-p);color:var(--main);font-family:'Noto Sans KR',sans-serif;font-size:.9rem;outline:none;margin-bottom:14px;"/>
+    <div style="font-size:.75rem;color:var(--hint);margin-bottom:16px;">
+      👉 <a href="https://aistudio.google.com/apikey" target="_blank" style="color:var(--pink);">aistudio.google.com/apikey</a> 에서 무료로 발급받을 수 있어요
+    </div>
+    <div style="display:flex;gap:10px;">
+      <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="closeModal('apiKeyModal')">나중에</button>
+      <button class="btn btn-primary btn-sm" style="flex:1;" onclick="saveApiKey()">저장하기</button>
+    </div>
+  </div>
+</div>
+
+<!-- 횟수 초과 모달 -->
+<div class="modal-overlay" id="quotaModal">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal('quotaModal')">×</button>
+    <div class="modal-title">이번 달 무료 횟수를 다 썼어요 🥚</div>
+    <div class="modal-sub">무료 이미지 생성은 매달 3회까지 가능해요.<br/>다음 달에 다시 만들거나, 라이브러리에서 골라보세요!</div>
+    <div style="display:flex;gap:10px;margin-top:4px;">
+      <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="closeModal('quotaModal');switchTab('library')">라이브러리 보기</button>
+    </div>
+    <p style="font-size:.75rem;color:var(--hint);margin-top:14px;text-align:center;">다음 달 초기화: <span id="resetDate"></span></p>
+  </div>
+</div>
+
+<!-- ━━━ ① 시작 화면 ━━━ -->
+<div class="screen active" id="screen-start">
+<div class="wrap">
+  <div style="font-size:2.8rem;margin-bottom:6px;">🌸</div>
+  <div style="font-family:'Gaegu',cursive;font-size:2.4rem;color:var(--pink);margin-bottom:4px;">아침 미션</div>
+  <div style="color:var(--sub);font-size:.9rem;margin-bottom:24px;">미션을 완료하면 알이 깨어나요!</div>
+
+  <!-- 탭 -->
+  <div class="tabs" style="width:100%;">
+    <button class="tab active" id="tab-library" onclick="switchTab('library')">📚 라이브러리</button>
+    <button class="tab" id="tab-create" onclick="switchTab('create')">✨ 직접 만들기</button>
+  </div>
+
+  <!-- ── 라이브러리 탭 ── -->
+  <div id="panel-library" style="width:100%;">
+    <div class="card">
+      <div class="card-label">캐릭터 선택</div>
+      <div class="search-row">
+        <input class="search-input" id="searchInput" placeholder="이름 또는 태그 검색..." oninput="filterChars()"/>
+      </div>
+      <div class="char-grid" id="charGrid"><div class="char-empty">불러오는 중...</div></div>
+      <div id="selPreview" style="display:none;">
+        <div class="sel-preview">
+          <img class="sel-img" id="selImg" src="" alt=""/>
+          <div><div class="sel-name" id="selName"></div><div class="sel-sub" id="selSub"></div></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── 직접 만들기 탭 ── -->
+  <div id="panel-create" style="display:none;width:100%;">
+    <div class="card">
+      <div class="card-label">이번 달 무료 생성 횟수</div>
+      <div class="quota-bar">
+        <div class="quota-label" id="quotaLabel">3회 남음</div>
+        <div class="quota-dots" id="quotaDots"></div>
+      </div>
+      <div class="card-label">캐릭터 이름</div>
+      <input type="text" id="createName" placeholder="예) 하츄핑, 피카츄..."
+        style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid var(--pink-l);background:var(--pink-p);color:var(--main);font-family:'Noto Sans KR',sans-serif;font-size:.9rem;outline:none;margin-bottom:14px;"
+        oninput="checkCreateReady()"/>
+      <div class="card-label">태그 (쉼표로 구분)</div>
+      <input type="text" id="createTags" placeholder="예) 티니핑, 분홍색"
+        style="width:100%;padding:10px 14px;border-radius:10px;border:2px solid var(--pink-l);background:var(--pink-p);color:var(--main);font-family:'Noto Sans KR',sans-serif;font-size:.9rem;outline:none;margin-bottom:14px;"/>
+      <div class="card-label">캐릭터 이미지 업로드</div>
+      <div class="upload-zone" id="createUpload">
+        <input type="file" id="createFile" accept="image/*" onchange="handleCreateFile(this)"/>
+        <div id="createUploadContent">
+          <div style="font-size:2rem;margin-bottom:6px;">🖼️</div>
+          <div style="font-weight:700;font-size:.9rem;">클릭하거나 드래그</div>
+          <div style="font-size:.78rem;color:var(--hint);margin-top:3px;">PNG, JPG, WEBP 지원</div>
+        </div>
+      </div>
+      <div class="card-label" style="margin-top:14px;">부화 단계 수</div>
+      <div class="count-chips" id="stageChips">
+        <div class="count-chip" data-n="3" onclick="selectStages(this)">3단계</div>
+        <div class="count-chip active" data-n="6" onclick="selectStages(this)">6단계</div>
+        <div class="count-chip" data-n="8" onclick="selectStages(this)">8단계</div>
+      </div>
+    </div>
+
+    <!-- 진행바 -->
+    <div class="prog-wrap" id="createProgWrap">
+      <div class="prog-label" id="createProgLabel">준비 중...</div>
+      <div class="prog-bg"><div class="prog-fill" id="createProgFill" style="width:0%"></div></div>
+      <div class="prog-steps" id="createProgSteps"></div>
+    </div>
+
+    <!-- 생성 결과 -->
+    <div id="createResult" style="display:none;">
+      <div class="card">
+        <div class="card-label">생성 완료 🎉</div>
+        <div class="mini-gallery" id="createGallery"></div>
+        <div style="display:flex;gap:8px;margin-top:14px;">
+          <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="useCreatedChar()">✅ 이 캐릭터로 시작</button>
+          <button class="btn btn-ghost btn-sm" style="flex:1;" onclick="shareToLibrary()">📤 공유하기</button>
+        </div>
+      </div>
+    </div>
+
+    <button class="btn btn-primary btn-full" id="btnCreate" onclick="startCreate()" disabled
+      style="margin-bottom:12px;">✨ 부화 이미지 만들기</button>
+  </div>
+
+  <!-- 공통: 미션 설정 -->
+  <div class="card" style="width:100%;">
+    <div class="card-label">미션 수</div>
+    <div class="count-chips" style="margin-bottom:0;">
+      <div class="count-chip" data-n="3" onclick="selectCount(this)">3개</div>
+      <div class="count-chip active" data-n="5" onclick="selectCount(this)">5개</div>
+      <div class="count-chip" data-n="7" onclick="selectCount(this)">7개</div>
+      <div class="count-chip" data-n="10" onclick="selectCount(this)">10개</div>
+    </div>
+  </div>
+
+  <div class="card" style="width:100%;">
+    <div class="card-label">미션 내용</div>
+    <div id="missionEditor"></div>
+    <button onclick="addMission()" style="background:none;border:1.5px solid var(--pink-l);color:var(--sub);border-radius:99px;padding:6px 14px;cursor:pointer;font-size:.78rem;font-family:'Noto Sans KR',sans-serif;font-weight:700;margin-top:8px;transition:all .15s;">+ 미션 추가</button>
+  </div>
+
+  <button class="btn btn-primary btn-full" id="btnStart" onclick="startGame()" disabled
+    style="font-size:1rem;padding:15px;">🌟 오늘 미션 시작하기</button>
+</div>
+</div>
+
+<!-- ━━━ ② 게임 화면 ━━━ -->
+<div class="screen" id="screen-game">
+  <div id="screen-game-inner" style="max-width:500px;margin:0 auto;padding:20px 16px 80px;">
+    <div class="game-header">
+      <div class="game-title">🌸 아침 미션</div>
+      <div style="display:flex;align-items:center;gap:8px;">
+        <span style="font-size:.78rem;color:var(--hint);" id="gameDate"></span>
+        <button class="btn-back" onclick="goBack()">← 돌아가기</button>
+      </div>
+    </div>
+    <div class="egg-section">
+      <div class="egg-wrap" id="eggWrap"></div>
+      <div class="egg-text" id="eggText">아직 시작 전이에요 🥚</div>
+      <div class="star-row" id="starRow"></div>
+    </div>
+    <div class="mission-list" id="missionList"></div>
+  </div>
+</div>
+
+<!-- ━━━ ③ 완료 화면 ━━━ -->
+<div class="screen" id="screen-complete">
+  <div class="complete-emoji">🎉</div>
+  <div class="complete-title" id="completeTitle">부화 완료!</div>
+  <div class="complete-sub">오늘 아침 미션을 모두 완료했어요!</div>
+  <div class="final-egg" id="finalEgg"></div>
+  <button class="btn btn-primary" onclick="resetGame()" style="font-size:1rem;padding:14px 32px;">🔄 내일 또 만나요!</button>
+</div>
+
+<script>
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// ⚠️  관리자 설정 영역
+// GitHub Pages 배포 후 아래 값을 채워주세요
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+const CONFIG = {
+  // Supabase Edge Function URL (Gemini API 키는 서버에만 저장 — 안전!)
+  FUNCTION_URL: 'https://upatzvlpmhaccwkpjbbc.supabase.co/functions/v1/bright-service',
+
+  // 공유 라이브러리 JSON URL
+  LIBRARY_URL: '',
+
+  // 월 무료 생성 횟수
+  FREE_QUOTA: 3,
+};
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// ── 상태 ──
+let allChars = [];
+let selectedChar = null;
+let missionCount = 5;
+let activeMissions = [];
+let completed = [];
+let createBase64 = null;
+let createMime = 'image/png';
+let createStages = 6;
+let createdImages = []; // 생성된 이미지 [{blob,dataUrl,label}]
+let pendingCreatedChar = null; // 공유 대기
+
+const DEFAULT_MISSIONS = [
+  {id:'m1',name:'🚽 화장실 가기',desc:'스스로 화장실에 다녀와요'},
+  {id:'m2',name:'🚿 세수하기',desc:'비누로 얼굴을 깨끗이 씻어요'},
+  {id:'m3',name:'👕 옷 갈아입기',desc:'오늘 입을 옷으로 갈아입어요'},
+  {id:'m4',name:'🍳 밥 먹기',desc:'밥을 맛있게 먹어요'},
+  {id:'m5',name:'👟 신발 신기',desc:'신발을 스스로 신어요'},
+  {id:'m6',name:'🎒 가방 메기',desc:'가방을 메고 준비 완료!'},
+  {id:'m7',name:'🦷 양치질',desc:'이를 깨끗이 닦아요'},
+  {id:'m8',name:'💊 비타민 먹기',desc:'건강을 위해 비타민을 먹어요'},
+  {id:'m9',name:'📚 책가방 확인',desc:'준비물이 모두 들어있는지 확인해요'},
+  {id:'m10',name:'😊 인사하기',desc:'출발 전 가족에게 인사해요'},
+];
+let editMissions = null;
+
+// ━━━ 횟수 제한 관리 ━━━
+function getQuotaKey() {
+  const d = new Date();
+  return `quota_${d.getFullYear()}_${d.getMonth()+1}`;
+}
+function getUsedCount() {
+  return parseInt(localStorage.getItem(getQuotaKey()) || '0');
+}
+function incrementUsed() {
+  // 서버에서 자동 차감됨
+}
+function getRemainingQuota() {
+  return Math.max(0, CONFIG.FREE_QUOTA - getUsedCount());
+}
+async function renderQuota() {
+  const { used, remaining } = await fetchQuotaFromServer();
+  document.getElementById('quotaLabel').textContent =
+    remaining > 0 ? `이번 달 ${remaining}회 남음` : '이번 달 횟수를 다 썼어요';
+  const dots = document.getElementById('quotaDots');
+  dots.innerHTML = Array.from({length: CONFIG.FREE_QUOTA}, (_,i) =>
+    `<div class="quota-dot ${i < used ? 'used' : 'available'}"></div>`
+  ).join('');
+  const next = new Date();
+  next.setMonth(next.getMonth() + 1, 1);
+  document.getElementById('resetDate').textContent =
+    `${next.getFullYear()}년 ${next.getMonth()+1}월 1일`;
+  // 횟수 소진 시 버튼 비활성화
+  document.getElementById('btnCreate').disabled = remaining <= 0 || !createBase64 || !document.getElementById('createName').value.trim();
+}
+
+// ━━━ 탭 전환 ━━━
+function switchTab(tab) {
+  document.getElementById('panel-library').style.display = tab==='library' ? 'block' : 'none';
+  document.getElementById('panel-create').style.display  = tab==='create'  ? 'block' : 'none';
+  document.getElementById('tab-library').classList.toggle('active', tab==='library');
+  document.getElementById('tab-create').classList.toggle('active',  tab==='create');
+  if (tab==='create') {
+    renderQuota(); checkCreateReady();
+    if (!CONFIG.GEMINI_KEY) setTimeout(promptApiKey, 300);
+  }
+  checkStartReady();
+}
+
+// ━━━ 라이브러리 로드 ━━━
+async function loadLibrary() {
+  showLoading(true, '라이브러리 불러오는 중...');
+  try {
+    // 로컬 우선 (관리자 앱과 같은 브라우저면 바로 연동)
+    const local = JSON.parse(localStorage.getItem('eggLibrary') || '{"characters":[]}');
+    allChars = local.characters || [];
+
+    // 외부 URL 있으면 병합
+    if (CONFIG.LIBRARY_URL) {
+      const res = await fetch(CONFIG.LIBRARY_URL + '?t=' + Date.now());
+      const remote = await res.json();
+      const remoteChars = remote.characters || [];
+      // 중복 제거 (id 기준)
+      const localIds = new Set(allChars.map(c=>c.id));
+      remoteChars.forEach(c => { if (!localIds.has(c.id)) allChars.push(c); });
+    }
+  } catch(e) { console.warn('라이브러리 로드 실패:', e); }
+  showLoading(false);
+  renderCharGrid(allChars);
+  renderMissionEditor();
+}
+
+function filterChars() {
+  const q = document.getElementById('searchInput').value.trim().toLowerCase();
+  renderCharGrid(q ? allChars.filter(c =>
+    c.name.toLowerCase().includes(q) || (c.tags||[]).some(t=>t.toLowerCase().includes(q))
+  ) : allChars);
+}
+
+function renderCharGrid(chars) {
+  const grid = document.getElementById('charGrid');
+  if (!chars.length) {
+    grid.innerHTML = `<div class="char-empty">${allChars.length ? '검색 결과 없음' : '아직 캐릭터가 없어요<br/>직접 만들기 탭에서 만들어보세요!'}</div>`;
+    return;
+  }
+  grid.innerHTML = chars.map(c => `
+    <div class="char-item ${selectedChar?.id===c.id?'selected':''}" onclick="selectChar('${c.id}')">
+      <div class="char-thumb">${c.thumbnail?`<img src="${c.thumbnail}" alt="${c.name}"/>`:'🥚'}</div>
+      <div class="char-item-name">${c.name}</div>
+    </div>`).join('');
+}
+
+function selectChar(id) {
+  selectedChar = allChars.find(c=>c.id===id) || null;
+  filterChars();
+  const prev = document.getElementById('selPreview');
+  if (selectedChar) {
+    prev.style.display = 'block';
+    document.getElementById('selImg').src = selectedChar.thumbnail || '';
+    document.getElementById('selName').textContent = selectedChar.name;
+    document.getElementById('selSub').textContent = `${selectedChar.totalStages}단계 부화`;
+  } else {
+    prev.style.display = 'none';
+  }
+  checkStartReady();
+}
+
+// ━━━ 이미지 직접 만들기 ━━━
+function handleCreateFile(input) {
+  const file = input.files[0]; if (!file) return;
+  createMime = file.type || 'image/png';
+  const r = new FileReader();
+  r.onload = e => {
+    createBase64 = e.target.result.split(',')[1];
+    const zone = document.getElementById('createUpload');
+    const old = zone.querySelector('.preview-img'); if(old) old.remove();
+    const img = document.createElement('img'); img.className='preview-img'; img.src=e.target.result;
+    zone.appendChild(img);
+    document.getElementById('createUploadContent').style.display='none';
+    checkCreateReady();
+  };
+  r.readAsDataURL(file);
+}
+const cz = document.getElementById('createUpload');
+cz.addEventListener('dragover',e=>{e.preventDefault();cz.classList.add('drag');});
+cz.addEventListener('dragleave',()=>cz.classList.remove('drag'));
+cz.addEventListener('drop',e=>{
+  e.preventDefault();cz.classList.remove('drag');
+  const f=e.dataTransfer.files[0];
+  if(f&&f.type.startsWith('image/')){
+    const dt=new DataTransfer();dt.items.add(f);
+    document.getElementById('createFile').files=dt.files;
+    handleCreateFile(document.getElementById('createFile'));
+  }
+});
+
+function selectStages(el) {
+  document.querySelectorAll('#stageChips .count-chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  createStages = parseInt(el.dataset.n);
+}
+
+function checkCreateReady() {
+  const name = document.getElementById('createName').value.trim();
+  const hasQuota = getRemainingQuota() > 0;
+  document.getElementById('btnCreate').disabled = !(name && createBase64 && hasQuota);
+}
+
+function checkStartReady() {
+  const libActive = document.getElementById('panel-library').style.display !== 'none';
+  if (libActive) {
+    document.getElementById('btnStart').disabled = !selectedChar;
+  } else {
+    document.getElementById('btnStart').disabled = !pendingCreatedChar;
+  }
+}
+
+// ━━━ 부화 단계 정의 ━━━
+function getStageLabels(n) {
+  const pool = [
+    {e:'🥚',l:'완전한 알'},{e:'🔍',l:'미세한 균열'},{e:'💥',l:'균열 확장'},
+    {e:'👀',l:'눈이 보임'},{e:'🐣',l:'머리 등장'},{e:'✋',l:'상체 나옴'},
+    {e:'🦶',l:'거의 다 나옴'},{e:'🌟',l:'완전 부화'},
+    {e:'✨',l:'첫 날갯짓'},{e:'🎉',l:'완전한 모습'},
+  ];
+  return pool.slice(0, n);
+}
+
+// ━━━ 이미지 생성 ━━━
+async function startCreate() {
+  if (getRemainingQuota() <= 0) { openModal('quotaModal'); return; }
+  if (!createBase64 || !document.getElementById('createName').value.trim()) return;
+
+  const name = document.getElementById('createName').value.trim();
+  const stages = getStageLabels(createStages);
+  createdImages = [];
+  document.getElementById('createGallery').innerHTML = '';
+  document.getElementById('createResult').style.display = 'none';
+
+  const pw = document.getElementById('createProgWrap');
+  pw.style.display = 'block';
+  document.getElementById('btnCreate').disabled = true;
+
+  const stepsEl = document.getElementById('createProgSteps');
+  stepsEl.innerHTML = stages.map((s,i)=>`<span class="prog-dot" id="pd-${i}">${s.e} ${s.l}</span>`).join('');
+
+  let prevB64 = createBase64, prevMime = createMime, fails = 0;
+
+  for (let i=0; i<stages.length; i++) {
+    document.getElementById('pd-'+i).classList.add('active');
+    setCreateProg(i, stages.length, `${stages[i].l} 생성 중... (${i+1}/${stages.length})`);
+    try {
+      const prompt = buildPrompt(stages, i, name, createStages);
+      const {base64, mime} = await callGemini(CONFIG.GEMINI_KEY, prompt, prevB64, prevMime);
+      const blob = base64ToBlob(base64, mime);
+      const url  = URL.createObjectURL(blob);
+      createdImages.push({blob, dataUrl: url, label: stages[i].l, emoji: stages[i].e});
+      addMiniItem(url, stages[i].e + ' ' + stages[i].l);
+      document.getElementById('pd-'+i).classList.remove('active');
+      document.getElementById('pd-'+i).classList.add('done');
+      prevB64 = base64; prevMime = mime;
+    } catch(e) {
+      document.getElementById('pd-'+i).classList.remove('active');
+      fails++;
+      if (fails >= 3) { alert('연속 3회 실패. API 키를 확인해주세요.'); break; }
+    }
+  }
+
+  setCreateProg(stages.length, stages.length, '완료!');
+  document.getElementById('btnCreate').disabled = false;
+
+  if (createdImages.length > 0) {
+    // 횟수 차감
+    incrementUsed();
+    renderQuota();
+
+    // 생성 결과를 pendingCreatedChar로 저장
+    const tagsRaw = document.getElementById('createTags').value.trim();
+    const tags = tagsRaw ? tagsRaw.split(',').map(t=>t.trim()).filter(Boolean) : [];
+    const id = name + '_' + Date.now();
+    pendingCreatedChar = {
+      id, name, tags,
+      totalStages: createdImages.length,
+      stages: createdImages.map(img => img.dataUrl),
+      thumbnail: createdImages[createdImages.length-1].dataUrl,
+      createdAt: new Date().toISOString().slice(0,10),
+    };
+    selectedChar = pendingCreatedChar;
+    document.getElementById('createResult').style.display = 'block';
+    checkStartReady();
+    checkCreateReady();
+  }
+}
+
+function addMiniItem(url, label) {
+  const item = document.createElement('div'); item.className='mini-item';
+  item.innerHTML = `<img src="${url}" alt="${label}"/><div class="mini-caption">${label}</div>`;
+  document.getElementById('createGallery').appendChild(item);
+}
+
+function setCreateProg(done, total, label) {
+  document.getElementById('createProgLabel').textContent = label;
+  document.getElementById('createProgFill').style.width = Math.round(done/total*100)+'%';
+}
+
+// 생성한 캐릭터로 바로 시작
+function useCreatedChar() {
+  if (!pendingCreatedChar) return;
+  selectedChar = pendingCreatedChar;
+  checkStartReady();
+  startGame();
+}
+
+// 공유 라이브러리에 추가
+function shareToLibrary() {
+  if (!pendingCreatedChar) return;
+  const lib = JSON.parse(localStorage.getItem('eggLibrary') || '{"version":"1.0","characters":[]}');
+  // 중복 체크
+  if (lib.characters.some(c => c.name === pendingCreatedChar.name)) {
+    if (!confirm(`"${pendingCreatedChar.name}"이 이미 라이브러리에 있어요. 추가할까요?`)) return;
+  }
+  lib.characters.push(pendingCreatedChar);
+  lib.updated = new Date().toISOString().slice(0,10);
+  localStorage.setItem('eggLibrary', JSON.stringify(lib));
+  allChars = lib.characters;
+  alert('📚 라이브러리에 공유했어요! 다른 기기에서도 볼 수 있으려면 관리자 앱에서 내보내기 해주세요.');
+  switchTab('library');
+  filterChars();
+}
+
+// ━━━ 서버 API 호출 (Gemini 키는 서버에만 저장됨) ━━━
+function getDeviceId() {
+  let id = localStorage.getItem('device_id');
+  if (!id) {
+    id = 'dev_' + Math.random().toString(36).slice(2) + Date.now();
+    localStorage.setItem('device_id', id);
+  }
+  return id;
+}
+
+async function callGemini(key, prompt, imgB64, imgMime) {
+  const res = await fetch(CONFIG.FUNCTION_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      action: 'generate',
+      device_id: getDeviceId(),
+      prompt,
+      image_base64: imgB64,
+      image_mime: imgMime,
+    })
+  });
+  const data = await res.json();
+  if (res.status === 429 || data.error === 'quota_exceeded') {
+    openModal('quotaModal');
+    throw new Error('quota_exceeded');
+  }
+  if (!res.ok || data.error) throw new Error(data.error || `HTTP ${res.status}`);
+  return { base64: data.base64, mime: data.mime };
+}
+
+async function fetchQuotaFromServer() {
+  try {
+    const res = await fetch(CONFIG.FUNCTION_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ action: 'get_quota', device_id: getDeviceId() })
+    });
+    const data = await res.json();
+    return { used: data.used ?? 0, remaining: data.remaining ?? CONFIG.FREE_QUOTA };
+  } catch { return { used: 0, remaining: CONFIG.FREE_QUOTA }; }
+}
+
+function buildPrompt(stages, i, name, total) {
+  if (i===0) return `Create a cute decorated egg illustration that contains the character "${name}". The egg should be colorful and whole with no cracks. Stage 1 of ${total}. Cute cartoon style matching the uploaded character's colors.`;
+  if (i===total-1) return `Create an illustration of the character "${name}" fully hatched from an egg. Stage ${total} of ${total}: completely emerged, happy, with broken shell pieces around. Match the character from the reference image exactly.`;
+  const pct = Math.round((i/(total-1))*100);
+  return `Hatching egg illustration for "${name}". Stage ${i+1} of ${total} (${pct}% hatched): ${stages[i].l}. Use previous stage as reference. Show more of the character emerging than before. Same cute style throughout.`;
+}
+
+// ━━━ 미션 설정 ━━━
+function selectCount(el) {
+  document.querySelectorAll('.card .count-chips:last-of-type .count-chip').forEach(c=>c.classList.remove('active'));
+  // 미션 수 칩만 선택 (stageChips 제외)
+  el.classList.add('active');
+  missionCount = parseInt(el.dataset.n);
+  renderMissionEditor();
+}
+function getMissions() { if (!editMissions) editMissions=[...DEFAULT_MISSIONS]; return editMissions; }
+function renderMissionEditor() {
+  const ed = document.getElementById('missionEditor');
+  ed.innerHTML = getMissions().slice(0,missionCount).map((m,i)=>`
+    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+      <span style="color:var(--hint);font-size:.78rem;min-width:18px;">${i+1}</span>
+      <input value="${m.name}" oninput="getMissions()[${i}].name=this.value"
+        style="flex:1;padding:7px 11px;border-radius:10px;border:1.5px solid var(--pink-l);background:var(--pink-p);color:var(--main);font-family:'Noto Sans KR',sans-serif;font-size:.85rem;outline:none;"/>
+      <button onclick="getMissions().splice(${i},1);missionCount=Math.max(1,missionCount-1);renderMissionEditor();"
+        style="background:none;border:none;color:var(--hint);cursor:pointer;font-size:.95rem;">✕</button>
+    </div>`).join('');
+}
+function addMission() { getMissions().push({id:'m'+Date.now(),name:'새 미션',desc:''}); missionCount++; renderMissionEditor(); }
+
+// ━━━ 게임 시작 ━━━
+function startGame() {
+  if (!selectedChar) return;
+  completed = [];
+  activeMissions = getMissions().slice(0,missionCount).map((m,i)=>({...m,idx:i}));
+  const today = new Date();
+  document.getElementById('gameDate').textContent =
+    `${today.getFullYear()}.${String(today.getMonth()+1).padStart(2,'0')}.${String(today.getDate()).padStart(2,'0')}`;
+  showScreen('game');
+  renderEgg();
+  renderStars();
+  renderMissions();
+}
+
+// ━━━ 알 렌더링 ━━━
+function renderEgg() {
+  const wrap = document.getElementById('eggWrap');
+  const pct = activeMissions.length ? completed.length/activeMissions.length : 0;
+  const stages = selectedChar.stages||[];
+  const idx = Math.min(Math.floor(pct*stages.length), stages.length-1);
+  if (stages.length && stages[idx]) {
+    wrap.innerHTML = `<img class="egg-stage-img" src="${stages[idx]}" alt="단계 ${idx+1}"/>`;
+  } else {
+    wrap.innerHTML = buildEggSvg(Math.round(pct*100));
+  }
+  const el = document.getElementById('eggText');
+  if (!completed.length) el.textContent='아직 시작 전이에요 🥚';
+  else if (completed.length===activeMissions.length) el.textContent='완전 부화! 🌟';
+  else el.textContent=`${completed.length}/${activeMissions.length} 완료 — 조금만 더!`;
+}
+function buildEggSvg(p) {
+  const fills=['#fff9f0','#ffe8cc','#ffd8a8','#ffc580','#ffb060','#ff9a40'];
+  const f=fills[Math.min(Math.floor(p/18),fills.length-1)];
+  return `<svg viewBox="0 0 100 120" style="width:130px;height:155px;">
+    <ellipse cx="50" cy="65" rx="38" ry="48" fill="${f}" stroke="#f0c080" stroke-width="2"/>
+    ${p>15?'<path d="M50 25 L46 38 L53 44 L48 56" stroke="#d4a060" stroke-width="1.5" fill="none" stroke-linecap="round"/>':''}
+    ${p>35?'<path d="M62 38 L58 52 L64 58" stroke="#d4a060" stroke-width="1.2" fill="none" stroke-linecap="round"/>':''}
+    ${p>55?'<path d="M38 42 L34 55 L40 60" stroke="#d4a060" stroke-width="1.2" fill="none" stroke-linecap="round"/>':''}
+    ${p>=100?'<text x="50" y="72" text-anchor="middle" font-size="28">🌟</text>':''}
+  </svg>`;
+}
+
+// ━━━ 별 / 미션 ━━━
+function renderStars() {
+  document.getElementById('starRow').innerHTML = activeMissions.map((_,i)=>
+    `<span class="star ${i<completed.length?'lit':''}" id="star-${i}">⭐</span>`).join('');
+}
+function renderMissions() {
+  document.getElementById('missionList').innerHTML = activeMissions.map((m,i)=>{
+    const done=completed.includes(m.id);
+    return `<div class="mission-card ${done?'done':''}" onclick="toggleMission('${m.id}',${i})">
+      <div class="mission-num">${done?'✓':i+1}</div>
+      <div class="mission-info"><div class="mission-name">${m.name}</div>${m.desc?`<div class="mission-desc">${m.desc}</div>`:''}</div>
+      <button class="check-btn ${done?'done-btn':''}">${done?'완료! ✓':'했어요!'}</button>
+    </div>`;
+  }).join('');
+}
+function toggleMission(id,idx) {
+  const i=completed.indexOf(id);
+  if(i===-1){completed.push(id);animateStar(idx);}else{completed.splice(i,1);}
+  renderEgg(); renderStars(); renderMissions();
+  if(completed.length===activeMissions.length) setTimeout(showComplete,800);
+}
+function animateStar(idx) {
+  const s=document.getElementById('star-'+idx); if(!s)return;
+  s.style.transform='scale(1.8)'; setTimeout(()=>s.style.transform='',400);
+}
+
+// ━━━ 완료 ━━━
+function showComplete() {
+  const final=selectedChar.stages?.[selectedChar.stages.length-1]||'';
+  document.getElementById('finalEgg').innerHTML = final
+    ? `<img src="${final}" alt="${selectedChar.name}" style="width:100%;height:100%;object-fit:contain;background:var(--pink-p);"/>`
+    : `<div style="width:100%;height:100%;display:flex;align-items:center;justify-content:center;font-size:5rem;background:var(--pink-p);">🐣</div>`;
+  document.getElementById('completeTitle').textContent = selectedChar.name + ' 부화 완료!';
+  showScreen('complete');
+  fireConfetti();
+}
+
+// ━━━ 색종이 ━━━
+function fireConfetti() {
+  const colors=['#FF85C1','#C9A6FF','#FFD700','#6EE7B7','#BAE6FD'];
+  const cf=document.getElementById('confetti'); cf.innerHTML='';
+  for(let i=0;i<80;i++) setTimeout(()=>{
+    const el=document.createElement('div'); el.className='cf';
+    const dur=2.5+Math.random()*2;
+    el.style.cssText=`left:${Math.random()*100}%;top:-10px;background:${colors[Math.floor(Math.random()*colors.length)]};width:${6+Math.random()*8}px;height:${6+Math.random()*8}px;border-radius:${Math.random()>.5?'50%':'2px'};animation-duration:${dur}s;`;
+    cf.appendChild(el); setTimeout(()=>el.remove(),(dur+.5)*1000);
+  }, i*30);
+}
+
+// ━━━ 유틸 ━━━
+function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById('screen-'+id).classList.add('active');window.scrollTo(0,0);}
+function showLoading(v,txt){document.getElementById('loading').classList.toggle('show',v);if(txt)document.getElementById('loadingText').textContent=txt;}
+function goBack(){showScreen('start');}
+function resetGame(){showScreen('start');pendingCreatedChar=null;selectedChar=null;loadLibrary();}
+function openModal(id){document.getElementById(id).classList.add('show');}
+function closeModal(id){document.getElementById(id).classList.remove('show');}
+function base64ToBlob(b64,mime){const bin=atob(b64);const arr=new Uint8Array(bin.length);for(let i=0;i<bin.length;i++)arr[i]=bin.charCodeAt(i);return new Blob([arr],{type:mime});}
+
+// ━━━ API 키 관리 (기기에 저장, 파일에 넣지 않음) ━━━
+function loadApiKey() {
+  const saved = localStorage.getItem('geminiKey');
+  if (saved) { CONFIG.GEMINI_KEY = saved; return true; }
+  return false;
+}
+function promptApiKey() {
+  openModal('apiKeyModal');
+}
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) { alert('API 키를 입력해주세요.'); return; }
+  CONFIG.GEMINI_KEY = key;
+  localStorage.setItem('geminiKey', key);
+  closeModal('apiKeyModal');
+  checkCreateReady();
+  alert('✅ API 키가 저장됐어요! 다음부터는 자동으로 사용돼요.');
+}
+
+// ━━━ 초기화 ━━━
+loadApiKey();
+loadLibrary();
+renderQuota();
+renderMissionEditor();
+
+// 미션 수 칩 초기화 (stageChips와 분리)
+document.querySelectorAll('.card .count-chips').forEach((chips,idx) => {
+  if (idx === 1) {
+    chips.querySelectorAll('.count-chip').forEach(c => {
+      c.onclick = function() {
+        chips.querySelectorAll('.count-chip').forEach(x=>x.classList.remove('active'));
+        this.classList.add('active');
+        missionCount = parseInt(this.dataset.n);
+        renderMissionEditor();
+      };
+    });
+  }
+});
+</script>
+</body>
+</html>
